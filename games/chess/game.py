@@ -148,9 +148,9 @@ class GameState():
 		for square in board.piece_map():
 			piece = board.piece_map()[square]
 			entry = piece.piece_type - 1;
-			if self.playerTurn==1 and  piece.color != chess.WHITE:
+			if playerTurn==1 and  piece.color != chess.WHITE:
 				entry += 6
-			elif self.playerTurn==-1 and piece.color != chess.BLACK:
+			elif playerTurn==-1 and piece.color != chess.BLACK:
 				entry += 6
 
 			row = np.floor(square/8)

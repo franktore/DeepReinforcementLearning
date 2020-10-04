@@ -53,7 +53,7 @@ class Agent():
 		self.val_value_loss = []
 		self.val_policy_loss = []
 
-
+	
 	def simulate(self):
 
 		lg.logger_mcts.info('ROOT NODE...%s', self.mcts.root.state.id)
@@ -89,7 +89,7 @@ class Agent():
 		pi, values = self.getAV(1)
 
 		####pick the action
-		action, value = self.chooseAction(pi, values, tau, state)
+		action, value = self.chooseAction(pi, values, tau)
 
 		nextState, _, _ = state.takeAction(action)
 
@@ -106,8 +106,6 @@ class Agent():
 	def get_preds(self, state):
 		#predict the leaf
 		inputToModel = np.array([self.model.convertToModelInput(state)])
-
-		# print(inputToModel.shape)
 
 		preds = self.model.predict(inputToModel)
 		value_array = preds[0]
@@ -134,11 +132,12 @@ class Agent():
 		lg.logger_mcts.info('------EVALUATING LEAF------')
 
 		if done == 0:
-
+	
 			value, probs, allowedActions = self.get_preds(leaf.state)
 			lg.logger_mcts.info('PREDICTED VALUE FOR %d: %f', leaf.state.playerTurn, value)
 
 			probs = probs[allowedActions]
+
 			for idx, action in enumerate(allowedActions):
 				newState, _, _ = leaf.state.takeAction(action)
 				if newState.id not in self.mcts.tree:
@@ -151,18 +150,19 @@ class Agent():
 
 				newEdge = mc.Edge(leaf, node, probs[idx], action)
 				leaf.edges.append((action, newEdge))
-
+				
 		else:
 			lg.logger_mcts.info('GAME VALUE FOR %d: %f', leaf.playerTurn, value)
 
 		return ((value, breadcrumbs))
 
 
+		
 	def getAV(self, tau):
 		edges = self.mcts.root.edges
 		pi = np.zeros(self.action_size, dtype=np.integer)
 		values = np.zeros(self.action_size, dtype=np.float32)
-
+		
 		for action, edge in edges:
 			pi[action] = pow(edge.stats['N'], 1/tau)
 			values[action] = edge.stats['Q']
@@ -170,21 +170,13 @@ class Agent():
 		pi = pi / (np.sum(pi) * 1.0)
 		return pi, values
 
-	def chooseAction(self, pi, values, tau, state=None):
-		if state != None:
-			action = state.expertChoice()
-		elif tau == 0:
+	def chooseAction(self, pi, values, tau):
+		if tau == 0:
 			actions = np.argwhere(pi == max(pi))
 			action = random.choice(actions)[0]
 		else:
 			action_idx = np.random.multinomial(1, pi)
 			action = np.where(action_idx==1)[0][0]
-
-		if state != None:
-			if action not in state.allowedActions:
-				naction = action
-				action = random.choice(state.allowedActions)
-				print('Action {0} not allowed, choose random action {1}'.format(naction,action))
 
 		value = values[action]
 
@@ -199,14 +191,14 @@ class Agent():
 
 			training_states = np.array([self.model.convertToModelInput(row['state']) for row in minibatch])
 			training_targets = {'value_head': np.array([row['value'] for row in minibatch])
-								, 'policy_head': np.array([row['AV'] for row in minibatch])}
+								, 'policy_head': np.array([row['AV'] for row in minibatch])} 
 
 			fit = self.model.fit(training_states, training_targets, epochs=config.EPOCHS, verbose=1, validation_split=0, batch_size = 32)
 			lg.logger_mcts.info('NEW LOSS %s', fit.history)
 
 			self.train_overall_loss.append(round(fit.history['loss'][config.EPOCHS - 1],4))
-			self.train_value_loss.append(round(fit.history['value_head_loss'][config.EPOCHS - 1],4))
-			self.train_policy_loss.append(round(fit.history['policy_head_loss'][config.EPOCHS - 1],4))
+			self.train_value_loss.append(round(fit.history['value_head_loss'][config.EPOCHS - 1],4)) 
+			self.train_policy_loss.append(round(fit.history['policy_head_loss'][config.EPOCHS - 1],4)) 
 
 		plt.plot(self.train_overall_loss, 'k')
 		plt.plot(self.train_value_loss, 'k:')
