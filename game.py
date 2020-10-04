@@ -84,7 +84,7 @@ class GameState():
 		return binary
 
 	def _convertStateToId(self):
-		return self.board.board_fen()
+		return self.board.fen()
 
 	def _checkForEndGame(self):
 		endgame = self.board.is_checkmate() or \
