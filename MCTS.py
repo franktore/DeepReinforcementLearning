@@ -57,6 +57,7 @@ class MCTS():
 		done = 0
 		value = 0
 		count = 0
+		print('currentnode.isLeaf {0}'.format(currentNode.isLeaf()))
 		while not currentNode.isLeaf(): # and count<30:
 			count += 1
 			if count % 10 == 0:

@@ -87,13 +87,11 @@ class GameState():
 		return self.board.board_fen()
 
 	def _checkForEndGame(self):
-		fullmovecnt = int(self.board.fen().split(' ')[-1])
-		halfmovecnt = int(self.board.fen().split(' ')[-2])
 		endgame = self.board.is_checkmate() or \
 				self.board.is_stalemate() or \
 				self.board.is_insufficient_material() or \
-				halfmovecnt>=50 or \
-				fullmovecnt>=100 #self.board.can_claim_draw()
+				self.board.can_claim_fifty_moves() or \
+				self.board.can_claim_draw()
 		return endgame
 
 	def _getValue(self):
