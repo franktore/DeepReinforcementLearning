@@ -1,6 +1,5 @@
 import numpy as np
 from collections import deque
-
 import config
 
 class Memory:
@@ -21,9 +20,9 @@ class Memory:
 
 	def commit_ltmemory(self):
 		for i in self.stmemory:
+			i['state'].engine = None
 			self.ltmemory.append(i)
 		self.clear_stmemory()
 
 	def clear_stmemory(self):
 		self.stmemory = deque(maxlen=config.MEMORY_SIZE)
-		

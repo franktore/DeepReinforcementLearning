@@ -7,7 +7,9 @@ class Game:
 	def __init__(self):
 		self.currentPlayer = 1
 		self.board = chess.Board()
-		self.gameState = GameState(self.board, self.currentPlayer)
+		self.engine = chess.engine.SimpleEngine.popen_uci("C:\WinBoard-4.8.0\Stockfish\stockfish_20090216_x64_bmi2.exe")
+		disableresignation = ((np.random.randn(1)+1)/2)[0]<0.1
+		self.gameState = GameState(self.board, self.currentPlayer, self.engine, disableresignation)
 
 		# actionspace is the total number of possible moves at any given time.
 		# it includes picking a random piece from the board (8x8) and moving it randomly according to queen rules (56 possibilities)
@@ -22,7 +24,9 @@ class Game:
 
 	def reset(self):
 		self.currentPlayer = 1
-		self.gameState = GameState(self.board, self.currentPlayer)
+		disableresignation = ((np.random.randn(1)+1)/2)[0]<0.1
+		print('disable resignation {0}'.format(disableresignation))
+		self.gameState = GameState(self.board, self.currentPlayer, self.engine, disableresignation)
 		return self.gameState
 
 	def step(self, action):
@@ -47,13 +51,16 @@ class Game:
 		return identities
 
 class GameState():
-	def __init__(self, board, playerTurn):
+	def __init__(self, board, playerTurn, engine=None, disableresignation=False):
 		self.board = board
+		self.engine = engine
 		self.pieces = {'1':'White', '0': '-', '-1':'Black'}
 		self.playerTurn = playerTurn
+		self.disableresignation = disableresignation
 		self.binary = self._binary()
 		self.id = self._convertStateToId()
 		self.allowedActions, self.legalMoves, self.moveToAction = self._allowedActions()
+		self.resign = False
 		self.isEndGame = self._checkForEndGame()
 		self.value = self._getValue()
 		self.score = self._getScore()
@@ -84,18 +91,30 @@ class GameState():
 		return binary
 
 	def _convertStateToId(self):
-		return self.board.fen()
+		position = self.board.fen()
+		position = position.split(' ')
+		id = '{0} {1} {2}'.format(position[0],position[1],position[2])
+#		id = position
+		return id
 
 	def _checkForEndGame(self):
-		endgame = self.board.is_checkmate() or \
-				self.board.is_stalemate() or \
-				self.board.is_insufficient_material() or \
-				self.board.can_claim_fifty_moves() or \
-				self.board.can_claim_draw()
+		endgame = self.board.is_game_over(claim_draw=True)
+		if not endgame and self.engine != None:
+			info = self.engine.analyse(self.board, chess.engine.Limit(depth=8))
+			if self.playerTurn < 0:
+				score = info['score'].black()
+			else:
+				score = info['score'].white()
+			if score < -chess.engine.Cp(800):
+				# to allow 10% false positives we randomly disable resignation
+				if not self.disableresignation:
+					#print('{0} resigning at score {1}'.format(self.pieces[str(self.playerTurn)], score))
+					self.resign = True
+					endgame = True
 		return endgame
 
 	def _getValue(self):
-		if self.board.is_checkmate():
+		if self.board.is_checkmate() or self.resign:
 			return (-1, -1, 1)
 		return (0, 0, 0)
 
@@ -108,7 +127,7 @@ class GameState():
 			move = self.legalMoves[action]
 			newboard = self.board.copy()
 			newboard.push_uci(move.uci())
-			newState = GameState(newboard, -self.playerTurn)
+			newState = GameState(newboard, -self.playerTurn, self.engine, self.disableresignation)
 		else:
 			print('Action {0} NOT in legalMoves Dictionary'.format(action))
 			newState = self
@@ -123,12 +142,13 @@ class GameState():
 		return (newState, value, done)
 
 	def expertChoice(self):
-		engine = chess.engine.SimpleEngine.popen_uci("C:\WinBoard-4.8.0\Stockfish\stockfish_20090216_x64_bmi2.exe")
-		result = engine.play(self.board, chess.engine.Limit(time=0.01))
-		engine.quit()
 		action = 1
-		if result != None and result.move != None:
-			action = self.moveToAction[result.move.uci()]
+		if self.engine != None:
+		#engine = chess.engine.SimpleEngine.popen_uci("C:\WinBoard-4.8.0\Stockfish\stockfish_20090216_x64_bmi2.exe")
+			result = self.engine.play(self.board, chess.engine.Limit(time=0.01))
+			if result != None and result.move != None:
+				action = self.moveToAction[result.move.uci()]
+#		engine.quit()
 
 		return action
 
