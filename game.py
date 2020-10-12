@@ -9,7 +9,15 @@ class Game:
 		self.board = chess.Board()
 		self.engine = chess.engine.SimpleEngine.popen_uci("C:\WinBoard-4.8.0\Stockfish\stockfish_20090216_x64_bmi2.exe")
 		disableresignation = ((np.random.randn(1)+1)/2)[0]<0.1
-		self.gameState = GameState(self.board, self.currentPlayer, self.engine, disableresignation)
+
+		movtab = {}
+		hashtab = {}
+		movtab[0] = self.board.fen()
+		position = self.board.fen()
+		position = position.split(' ')
+		hash = '{0}'.format(position[0])
+		hashtab[hash] = 1
+		self.gameState = GameState(self.board, self.currentPlayer, movtab, hashtab, 1, self.engine, disableresignation)
 
 		# actionspace is the total number of possible moves at any given time.
 		# it includes picking a random piece from the board (8x8) and moving it randomly according to queen rules (56 possibilities)
@@ -26,7 +34,15 @@ class Game:
 		self.currentPlayer = 1
 		disableresignation = ((np.random.randn(1)+1)/2)[0]<0.1
 		print('disable resignation {0}'.format(disableresignation))
-		self.gameState = GameState(self.board, self.currentPlayer, self.engine, disableresignation)
+		self.board.reset()
+		movtab = {}
+		hashtab = {}
+		movtab[0] = self.board.fen()
+		position = self.board.fen()
+		position = position.split(' ')
+		hash = '{0}'.format(position[0])
+		hashtab[hash] = 1
+		self.gameState = GameState(self.board, self.currentPlayer, movtab, hashtab, 1, self.engine, disableresignation)
 		return self.gameState
 
 	def step(self, action):
@@ -51,12 +67,16 @@ class Game:
 		return identities
 
 class GameState():
-	def __init__(self, board, playerTurn, engine=None, disableresignation=False):
+	def __init__(self, board, playerTurn, movetable, hashtable, repetitions, engine=None, disableresignation=False):
+		self.T = 8
 		self.board = board
 		self.engine = engine
 		self.pieces = {'1':'White', '0': '-', '-1':'Black'}
 		self.playerTurn = playerTurn
 		self.disableresignation = disableresignation
+		self.movetable = movetable
+		self.hashtable = hashtable
+		self.repetitions = repetitions
 		self.binary = self._binary()
 		self.id = self._convertStateToId()
 		self.allowedActions, self.legalMoves, self.moveToAction = self._allowedActions()
@@ -86,14 +106,34 @@ class GameState():
 		return allowed, legalMoves, moveToAction
 
 	def _binary(self):
-		bitboard = self.getBitBoard(self.board)
-		binary = np.reshape(bitboard,(12*8*8))
+		planes = np.zeros((119,8,8))
+		t = len(self.movetable)-1
+		for i in range(0,self.T):
+			if (t-i) >= 0:
+				movestr = self.movetable[t-i]
+				bitboard = self.getBitBoard(movestr)
+				planes[i*14:(i+1)*14,] = bitboard
+		planes[112,] = np.ones((8,8))*self.playerTurn
+		state = self.movetable[t].split(' ')
+		nmoves = int(state[5])
+		planes[113,0,0] = nmoves
+		whiteKingCastle = int('K' in state[2])
+		whiteQueenCastle = int('Q' in state[2])
+		blackKingCastle = int('k' in state[2])
+		blackQueenCastle = int('q' in state[2])
+		planes[114,] = np.ones((8,8))*whiteKingCastle
+		planes[115,] = np.ones((8,8))*whiteQueenCastle
+		planes[116,] = np.ones((8,8))*blackKingCastle
+		planes[117,] = np.ones((8,8))*blackQueenCastle
+		noprogress = int(state[4])
+		planes[118,0,0] = noprogress
+		binary = np.reshape(planes,(119*8*8))
 		return binary
 
 	def _convertStateToId(self):
 		position = self.board.fen()
 		position = position.split(' ')
-		id = '{0} {1} {2}'.format(position[0],position[1],position[2])
+		id = '{0} {1} {2} {3} {4}'.format(position[0],position[1],position[2],position[3],position[4])
 #		id = position
 		return id
 
@@ -127,7 +167,20 @@ class GameState():
 			move = self.legalMoves[action]
 			newboard = self.board.copy()
 			newboard.push_uci(move.uci())
-			newState = GameState(newboard, -self.playerTurn, self.engine, self.disableresignation)
+			movtab = self.movetable.copy()
+			hashtab = self.hashtable.copy()
+			repetitions = self.repetitions
+			movtab[len(movtab)] = newboard.fen()
+			position = newboard.fen()
+			position = position.split(' ')
+			hash = '{0}'.format(position[0])
+			if hash not in hashtab:
+				hashtab[hash] = 1
+			else:
+				hashtab[hash] += 1
+			if hashtab[hash] > self.repetitions:
+				repetitions = hashtab[hash]
+			newState = GameState(newboard, -self.playerTurn, movtab, hashtab, repetitions, self.engine, self.disableresignation)
 		else:
 			print('Action {0} NOT in legalMoves Dictionary'.format(action))
 			newState = self
@@ -159,19 +212,32 @@ class GameState():
 			logger.info(self.board.fen())
 			logger.info('---------------')
 
-	def getBitBoard(self, board):
-		pos = str(board.board_fen())
-		lines = pos.split('/')
-		bitboard = np.zeros((12,8,8))
+	def getBitBoard(self, movestr):
+		board = chess.Board()
+		board.set_fen(movestr)
+		position = movestr.split(' ')
+		player = self.playerTurn
+		# if position[1] == 'w':
+		# 	player = 1
+		# else:
+		# 	player = -1
+		hash = '{0}'.format(position[0])
+		reps = self.hashtable[hash]
+		lines = position[0].split('/')
+		bitboard = np.zeros((14,8,8))
 		for square in board.piece_map():
 			piece = board.piece_map()[square]
 			entry = piece.piece_type - 1;
-			if self.playerTurn==1 and  piece.color != chess.WHITE:
+			if player==1 and  piece.color != chess.WHITE:
 				entry += 6
-			elif self.playerTurn==-1 and piece.color != chess.BLACK:
+			elif player==-1 and piece.color != chess.BLACK:
 				entry += 6
 
 			row = np.floor(square/8)
 			col = 8*((square/8)-row)
 			bitboard[int(entry),int(row),int(col)] = 1
+		if reps>1:
+			bitboard[12,]= np.ones((8,8))
+			if reps>2:
+				bitboard[13,]= np.ones((8,8))
 		return bitboard
