@@ -30,10 +30,13 @@ import pickle
 
 import config
 import chess
+<<<<<<< HEAD
 import chess.engine
 import time
 import multiprocessing
 from selfplay import _selfplay
+=======
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 
 lg.logger_main.info('=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*')
 lg.logger_main.info('=*=*=*=*=*=.      NEW LOG      =*=*=*=*=*')
@@ -44,17 +47,24 @@ env = Game()
 env.gameState
 env.identities(env.gameState, env.gameState.board)
 
+<<<<<<< HEAD
 t0 = time.perf_counter()
 
 t0
 t1 = time.perf_counter() - t0
 t1
+=======
+
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 
 500 in env.gameState.allowedActions
 board = chess.Board()
 board
 
+<<<<<<< HEAD
 engine = chess.engine.SimpleEngine.popen_uci("C:\WinBoard-4.8.0\Stockfish\stockfish_20090216_x64_bmi2.exe")
+=======
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 
 board.can_claim_draw()
 board.is_check()
@@ -64,6 +74,7 @@ gstate.allowedActions
 best_player.get_preds(gstate)
 
 gstate.allowedActions
+<<<<<<< HEAD
 board.reset()
 
 board.fen()
@@ -96,6 +107,16 @@ id
 board.can_claim_draw()
 board.can_claim_threefold_repetition()
 board.can_claim_fifty_moves()
+=======
+board
+
+
+board.fen()
+board.board_fen()
+board.set_board_fen('1p6/2P4P/8/8/8/8/2p5/8')
+board.set_fen('1p1p4/2P4P/8/8/8/8/2p5/1P1P4 b')
+board.set_fen('2r2k2/6b1/1p6/pn2p1R1/P3p2B/2NP3P/4Kn2/8 b - - 3 52')
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 board.legal_moves
 lmvs = {}
 for move in board.legal_moves:

@@ -7,6 +7,7 @@ class Game:
 	def __init__(self):
 		self.currentPlayer = 1
 		self.board = chess.Board()
+<<<<<<< HEAD
 		self.engine = chess.engine.SimpleEngine.popen_uci("C:\WinBoard-4.8.0\Stockfish\stockfish_20090216_x64_bmi2.exe")
 		disableresignation = ((np.random.randn(1)+1)/2)[0]<0.1
 
@@ -18,6 +19,9 @@ class Game:
 		hash = '{0}'.format(position[0])
 		hashtab[hash] = 1
 		self.gameState = GameState(self.board, self.currentPlayer, movtab, hashtab, 1, self.engine, disableresignation)
+=======
+		self.gameState = GameState(self.board, self.currentPlayer)
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 
 		# actionspace is the total number of possible moves at any given time.
 		# it includes picking a random piece from the board (8x8) and moving it randomly according to queen rules (56 possibilities)
@@ -32,6 +36,7 @@ class Game:
 
 	def reset(self):
 		self.currentPlayer = 1
+<<<<<<< HEAD
 		disableresignation = ((np.random.randn(1)+1)/2)[0]<0.1
 		print('disable resignation {0}'.format(disableresignation))
 		self.board.reset()
@@ -43,6 +48,9 @@ class Game:
 		hash = '{0}'.format(position[0])
 		hashtab[hash] = 1
 		self.gameState = GameState(self.board, self.currentPlayer, movtab, hashtab, 1, self.engine, disableresignation)
+=======
+		self.gameState = GameState(self.board, self.currentPlayer)
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 		return self.gameState
 
 	def step(self, action):
@@ -70,7 +78,10 @@ class GameState():
 	def __init__(self, board, playerTurn, movetable, hashtable, repetitions, engine=None, disableresignation=False):
 		self.T = 8
 		self.board = board
+<<<<<<< HEAD
 		self.engine = engine
+=======
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 		self.pieces = {'1':'White', '0': '-', '-1':'Black'}
 		self.playerTurn = playerTurn
 		self.disableresignation = disableresignation
@@ -80,7 +91,10 @@ class GameState():
 		self.binary = self._binary()
 		self.id = self._convertStateToId()
 		self.allowedActions, self.legalMoves, self.moveToAction = self._allowedActions()
+<<<<<<< HEAD
 		self.resign = False
+=======
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 		self.isEndGame = self._checkForEndGame()
 		self.value = self._getValue()
 		self.score = self._getScore()
