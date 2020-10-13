@@ -36,8 +36,12 @@ class Gen_Model():
 		self.model.save(run_folder + 'models/version' + "{0:0>4}".format(version) + '.h5')
 
 	def read(self, game, run_number, version):
+<<<<<<< HEAD
 #		return load_model( run_archive_folder + game + '/run' + str(run_number).zfill(4) + "/models/version" + "{0:0>4}".format(version) + '.h5', custom_objects={'softmax_cross_entropy_with_logits': softmax_cross_entropy_with_logits})
 		return load_model(  run_folder +  "/models/version" + "{0:0>4}".format(version) + '.h5', custom_objects={'softmax_cross_entropy_with_logits': softmax_cross_entropy_with_logits})
+=======
+		return load_model( run_archive_folder + game + '/run' + str(run_number).zfill(4) + "/models/version" + "{0:0>4}".format(version) + '.h5', custom_objects={'softmax_cross_entropy_with_logits': softmax_cross_entropy_with_logits})
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 
 	def printWeightAverages(self):
 		layers = self.model.layers
@@ -103,7 +107,11 @@ class Gen_Model():
 						pass
 
 			plt.show()
+<<<<<<< HEAD
 
+=======
+				
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 		lg.logger_model.info('------------------')
 
 
@@ -234,13 +242,22 @@ class Residual_CNN(Gen_Model):
 
 		model = Model(inputs=[main_input], outputs=[vh, ph])
 		model.compile(loss={'value_head': 'mean_squared_error', 'policy_head': softmax_cross_entropy_with_logits},
+<<<<<<< HEAD
 			optimizer=SGD(lr=self.learning_rate, momentum = config.MOMENTUM),
 			loss_weights={'value_head': 0.5, 'policy_head': 0.5}
+=======
+			optimizer=SGD(lr=self.learning_rate, momentum = config.MOMENTUM),	
+			loss_weights={'value_head': 0.5, 'policy_head': 0.5}	
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 			)
 
 		return model
 
 	def convertToModelInput(self, state):
 		inputToModel =  state.binary #np.append(state.binary, [(state.playerTurn + 1)/2] * self.input_dim[1] * self.input_dim[2])
+<<<<<<< HEAD
 		inputToModel = np.reshape(inputToModel, self.input_dim)
+=======
+		inputToModel = np.reshape(inputToModel, self.input_dim) 
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 		return (inputToModel)

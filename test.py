@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import numpy as np
+=======
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 import time
 import asyncio
 import chess
@@ -35,6 +38,7 @@ result.move
 result.move.uci()
 board.push(result.move)
 
+<<<<<<< HEAD
 board = chess.Board()
 info = engine.analyse(board, chess.engine.Limit(depth=16))
 info['score']
@@ -84,8 +88,18 @@ np.floor(2237/73)
 
 
 
+=======
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
 # board = chess.Board()
 #
 # with chess.polyglot.open_reader("C:\WinBoard-4.8.0\WinBoard\default_book.bin") as reader:
 #     for entry in reader.find_all(board):
 #         print(entry.move, entry.weight, entry.learn)
+<<<<<<< HEAD
+=======
+
+board = chess.Board()
+board.set_fen('8/5p1k/6pP/8/4P1qP/8/r4P2/1r3K2 w - - 7 49')
+board.is_stalemate()
+board
+>>>>>>> 945d60897e62d688c1e3a56b585d4676474453c5
