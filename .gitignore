@@ -100,7 +100,7 @@
  -# mypy
  -.mypy_cache/
 
-
+run/
 analysis/
 archive/
 ipynb/
