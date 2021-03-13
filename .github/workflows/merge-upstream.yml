@@ -6,7 +6,7 @@ on:
   schedule:
      # actually, ~5 minutes is the highest
      # effective frequency you will get
-    - cron:  "0 0 1 1 *"
+    - cron:  "0 15 * * *"
 jobs:
   merge:
     runs-on: ubuntu-latest
@@ -24,6 +24,7 @@ jobs:
                                 # to fetch all git depth right from the start)
 
           git remote add upstream https://github.com/AppliedDataSciencePartners/DeepReinforcementLearning.git
+          git remote -v
           git fetch upstream master
 
           # Neither forget the -b opt,
